@@ -5,6 +5,7 @@ from predict import predict_one
 from visualize import plot_data, plot_split, plot_decision_boundary
 from split import best_split
 from utils import format_path
+import numpy as np
 
 st.title("🌳 Decision Tree Visualizer")
 
@@ -14,12 +15,17 @@ noise = st.sidebar.slider("Noise", 0.0, 0.5, 0.1)
 max_depth = st.sidebar.slider("Max Depth", 1, 10, 3)
 min_samples = st.sidebar.slider("Min Samples", 1, 20, 5)
 
-# Data
-X, y = generate_data(n=200, noise=noise)
+# Session state for data
+if "X" not in st.session_state:
+    st.session_state.X, st.session_state.y = generate_data(n=200, noise=noise)
+
+if st.sidebar.button("New Data"):
+    st.session_state.X, st.session_state.y = generate_data(n=200, noise=noise)
+
+X, y = st.session_state.X, st.session_state.y
 
 # Build tree
 tree = build_tree(X, y, max_depth=max_depth, min_samples=min_samples)
-f, t, g = best_split(X, y)
 
 # Tabs
 tab1, tab2, tab3, tab4 = st.tabs([
@@ -56,26 +62,14 @@ with tab4:
     x1 = st.slider("Feature 1", float(X[:,0].min()), float(X[:,0].max()))
     x2 = st.slider("Feature 2", float(X[:,1].min()), float(X[:,1].max()))
 
-    pred, path = predict_one(tree, [x1, x2])
+    pred, path = predict_one(tree, np.array([x1, x2]))
 
     st.write("Prediction:", pred)
     st.write("Path:", format_path(path))
-    
-if st.sidebar.button("Regenerate Data"):
-    X, y = generate_data(n=200, noise=noise)
 
-if "X" not in st.session_state:
-    st.session_state.X, st.session_state.y = generate_data()
-
-if st.sidebar.button("New Data"):
-    st.session_state.X, st.session_state.y = generate_data(noise=noise)
-
-X, y = st.session_state.X, st.session_state.y
-    
+# Debug (optional)
 st.write("X shape:", X.shape)
 st.write("y shape:", y.shape)
-st.write(X[:5])
-
 st.write("Noise:", noise)
 st.write("Max Depth:", max_depth)
 st.write("Min Samples:", min_samples)
